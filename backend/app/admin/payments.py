@@ -5,6 +5,7 @@ from typing import Optional
 from datetime import datetime, timezone
 from app.database import get_db
 from app.models.payment import Payment, PaymentStatus
+from app.models.reservation import Reservation, ReservationStatus
 from app.models.user import User
 from app.schemas.payment import PaymentResponse, PaymentUpdate
 from app.schemas.common import PaginatedResponse
@@ -49,4 +50,42 @@ async def update_payment(payment_id: int, data: PaymentUpdate, db: AsyncSession 
         p.paid_at = datetime.now(timezone.utc)
     await db.flush()
     await db.refresh(p)
-    return p
+    return PaymentResponse.model_validate(p)
+
+
+@router.patch("/{payment_id}/confirm", response_model=PaymentResponse)
+async def confirm_payment(payment_id: int, db: AsyncSession = Depends(get_db), _: User = Depends(get_current_admin)):
+    p = (await db.execute(select(Payment).where(Payment.id == payment_id))).scalar_one_or_none()
+    if not p:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    p.status = PaymentStatus.completed
+    p.paid_at = datetime.now(timezone.utc)
+    # Confirm the linked reservation
+    r = (await db.execute(select(Reservation).where(Reservation.id == p.reservation_id))).scalar_one_or_none()
+    if r:
+        r.status = ReservationStatus.confirmed
+    await db.flush()
+    await db.refresh(p)
+    return PaymentResponse.model_validate(p)
+
+
+@router.patch("/{payment_id}/reject", response_model=PaymentResponse)
+async def reject_payment(payment_id: int, db: AsyncSession = Depends(get_db), _: User = Depends(get_current_admin)):
+    p = (await db.execute(select(Payment).where(Payment.id == payment_id))).scalar_one_or_none()
+    if not p:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    p.status = PaymentStatus.failed
+    await db.flush()
+    await db.refresh(p)
+    return PaymentResponse.model_validate(p)
+
+
+@router.patch("/{payment_id}/refund", response_model=PaymentResponse)
+async def refund_payment(payment_id: int, db: AsyncSession = Depends(get_db), _: User = Depends(get_current_admin)):
+    p = (await db.execute(select(Payment).where(Payment.id == payment_id))).scalar_one_or_none()
+    if not p:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    p.status = PaymentStatus.refunded
+    await db.flush()
+    await db.refresh(p)
+    return PaymentResponse.model_validate(p)

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Eye, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
+import { getImageUrl } from '../../utils/imageUtils';
 import { adminService } from '../../services/adminService';
 import { AdminTable } from '../../components/admin/AdminTable';
 import { PaymentStatusBadge } from '../../components/payment/PaymentStatusBadge';
@@ -49,14 +50,14 @@ export default function AdminPayments() {
     { key: 'guest', label: 'Guest', render: (p: Payment) => `${p.booking?.guest?.first_name || ''} ${p.booking?.guest?.last_name || ''}`.trim() || '—' },
     { key: 'amount', label: 'Amount', render: (p: Payment) => <span className="font-semibold">{formatCurrency(p.amount)}</span> },
     { key: 'method', label: 'Method', render: (p: Payment) => p.method.replace('_', ' ') },
-    { key: 'submitted_at', label: 'Submitted', render: (p: Payment) => formatDateTime(p.submitted_at) },
+    { key: 'created_at', label: 'Submitted', render: (p: Payment) => formatDateTime(p.created_at) },
     { key: 'status', label: 'Status', render: (p: Payment) => <PaymentStatusBadge status={p.status} /> },
     {
       key: 'actions', label: 'Actions',
       render: (p: Payment) => (
         <div className="flex gap-1.5">
           {p.slip_image && (
-            <button onClick={() => setViewSlip(p.slip_image!)} className="p-1.5 text-navy hover:text-gold" title="View Slip">
+            <button onClick={() => setViewSlip(getImageUrl(p.slip_image))} className="p-1.5 text-navy hover:text-gold" title="View Slip">
               <Eye className="h-4 w-4" />
             </button>
           )}

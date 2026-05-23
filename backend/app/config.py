@@ -4,7 +4,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "mysql+aiomysql://root:Roza231105@localhost:3306/Hotel_R"
+    DATABASE_URL: str = "mysql+aiomysql://root:Roza231105@localhost:3306/Hotel_R_db"
 
     # JWT
     SECRET_KEY: str = "supersecretkey"

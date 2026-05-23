@@ -1,6 +1,7 @@
 import { Booking } from '../../types';
 import { formatDate } from '../../utils/dateUtils';
 import { formatCurrency } from '../../utils/priceUtils';
+import { getImageUrl } from '../../utils/imageUtils';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Link } from 'react-router-dom';
@@ -28,7 +29,7 @@ interface Props {
 }
 
 export function BookingCard({ booking, onCancel, onFeedback }: Props) {
-  const image = booking.room?.images?.[0] || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&auto=format&fit=crop';
+  const image = getImageUrl(booking.room?.images?.[0]) || 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&auto=format&fit=crop';
   const canCancel = ['pending', 'confirmed'].includes(booking.reservation_status);
   const canFeedback = booking.reservation_status === 'checked_out';
 

@@ -18,8 +18,8 @@ export const bookingService = {
   createBooking: (data: CreateBookingPayload) =>
     api.post<Booking>('/bookings', data).then(r => r.data),
 
-  getMyBookings: (status?: string) =>
-    api.get<PaginatedResponse<Booking>>('/bookings/my', { params: { status } }).then(r => r.data),
+  getMyBookings: () =>
+    api.get<Booking[]>('/bookings/my').then(r => r.data),
 
   getBooking: (id: number) =>
     api.get<Booking>(`/bookings/${id}`).then(r => r.data),

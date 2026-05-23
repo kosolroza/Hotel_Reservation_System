@@ -26,12 +26,10 @@ export default function MyBookings() {
   const [cancelId, setCancelId] = useState<number | null>(null);
   const [feedbackBooking, setFeedbackBooking] = useState<Booking | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data: allBookings = [], isLoading } = useQuery({
     queryKey: ['my-bookings'],
     queryFn: () => bookingService.getMyBookings(),
   });
-
-  const allBookings = data?.data || [];
 
   const currentStatuses = TABS.find(t => t.value === activeTab)?.statuses || [];
   const bookings = allBookings.filter(b => currentStatuses.includes(b.reservation_status));

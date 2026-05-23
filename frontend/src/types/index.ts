@@ -76,14 +76,13 @@ export interface Booking {
 
 export interface Payment {
   id: number;
-  booking_id: number;
+  reservation_id: number;
   booking?: Booking;
   amount: number;
-  method: 'qr_transfer' | 'bank_transfer' | 'cash';
+  method: string;
   slip_image?: string;
-  transaction_reference?: string;
+  transaction_ref?: string;
   status: 'pending' | 'completed' | 'failed' | 'refunded';
-  submitted_at: string;
   paid_at?: string;
   created_at: string;
 }
