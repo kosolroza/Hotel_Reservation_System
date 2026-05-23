@@ -73,6 +73,11 @@ def create_app() -> FastAPI:
     ]:
         app.include_router(router, prefix=prefix)
 
+    @app.on_event("startup")
+    async def startup():
+        from app.database import create_tables
+        await create_tables()
+        
     @app.get("/api/health", tags=["Health"])
     async def health():
         return {"status": "ok", "version": settings.APP_VERSION}
