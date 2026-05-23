@@ -102,11 +102,7 @@ export default function AdminPayments() {
     { key: 'guest', label: 'Guest', render: (p: Payment) => `${p.booking?.guest?.first_name || ''} ${p.booking?.guest?.last_name || ''}`.trim() || '—' },
     { key: 'amount', label: 'Amount', render: (p: Payment) => <span className="font-semibold">{formatCurrency(p.amount)}</span> },
     { key: 'method', label: 'Method', render: (p: Payment) => p.method.replace('_', ' ') },
-<<<<<<< HEAD
-    { key: 'created_at', label: 'Submitted', render: (p: Payment) => formatDateTime(p.created_at) },
-=======
     { key: 'submitted_at', label: 'Submitted', render: (p: Payment) => p.submitted_at ? formatDateTime(p.submitted_at) : '—' },
->>>>>>> seoklai
     { key: 'status', label: 'Status', render: (p: Payment) => <PaymentStatusBadge status={p.status} /> },
     {
       key: 'actions', label: 'Actions',
