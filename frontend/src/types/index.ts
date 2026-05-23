@@ -77,7 +77,6 @@ export interface Booking {
 export interface Payment {
   id: number;
   reservation_id: number;
-  booking?: Booking;
   amount: number;
   method: string;
   slip_image?: string;
@@ -85,6 +84,12 @@ export interface Payment {
   status: 'pending' | 'completed' | 'failed' | 'refunded';
   paid_at?: string;
   created_at: string;
+  // Enriched fields from GET /payments/my
+  booking_reference?: string;
+  check_in_date?: string;
+  check_out_date?: string;
+  room_number?: string;
+  room_type_name?: string;
 }
 
 export interface Promotion {

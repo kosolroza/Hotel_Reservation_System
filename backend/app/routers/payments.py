@@ -1,10 +1,11 @@
 import json
 from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile, File
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app.models.payment import Payment
+from app.models.reservation import Reservation
 from app.models.user import User
 from app.schemas.payment import PaymentCreate, PaymentResponse
 from app.services.payment_service import process_payment
@@ -41,9 +42,34 @@ async def create_payment(
     return await process_payment(data, db)
 
 
+@router.get("/my", response_model=List[dict])
+async def get_my_payments(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Return all payments for the current guest, with reservation & room info embedded."""
+    payments = (await db.execute(
+        select(Payment)
+        .join(Reservation, Reservation.id == Payment.reservation_id)
+        .where(Reservation.guest_id == current_user.id)
+        .order_by(Payment.created_at.desc())
+    )).scalars().all()
+
+    result = []
+    for p in payments:
+        d = PaymentResponse.model_validate(p).model_dump()
+        r = p.reservation
+        if r:
+            d["booking_reference"] = r.reference
+            d["check_in_date"] = r.check_in.isoformat() if r.check_in else None
+            d["check_out_date"] = r.check_out.isoformat() if r.check_out else None
+            if r.room:
+                d["room_number"] = r.room.room_number
+                d["room_type_name"] = r.room.room_type.name if r.room.room_type else None
+        result.append(d)
+    return result
+
+
 @router.get("/{payment_id}", response_model=PaymentResponse)
 async def get_payment(payment_id: int, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     p = (await db.execute(select(Payment).where(Payment.id == payment_id))).scalar_one_or_none()
     if not p:
         raise HTTPException(status_code=404, detail="Payment not found")
-    return p
+    return PaymentResponse.model_validate(p)

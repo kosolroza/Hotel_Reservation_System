@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { toast } from '../../components/ui/toast';
 import { formatCurrency } from '../../utils/priceUtils';
 import { formatDateTime } from '../../utils/dateUtils';
+import { getImageUrl } from '../../utils/imageUtils';
 import { Payment } from '../../types';
 
 export default function AdminPayments() {
@@ -45,7 +46,7 @@ export default function AdminPayments() {
         bookingRef.includes(q) ||
         paymentId.includes(q);
 
-      const submittedDate = p.submitted_at ? new Date(p.submitted_at) : null;
+      const submittedDate = p.created_at ? new Date(p.created_at) : null;
       const matchesFrom = !dateFrom || (submittedDate && submittedDate >= new Date(dateFrom));
       const matchesTo = !dateTo || (submittedDate && submittedDate <= new Date(dateTo + 'T23:59:59'));
 
@@ -70,7 +71,7 @@ export default function AdminPayments() {
       `${p.booking?.guest?.first_name || ''} ${p.booking?.guest?.last_name || ''}`.trim() || '—',
       p.amount,
       p.method?.replace('_', ' ') || '—',
-      p.submitted_at ? formatDateTime(p.submitted_at) : '—',
+      p.created_at ? formatDateTime(p.created_at) : '—',
       p.status,
     ]);
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
@@ -102,7 +103,7 @@ export default function AdminPayments() {
     { key: 'guest', label: 'Guest', render: (p: Payment) => `${p.booking?.guest?.first_name || ''} ${p.booking?.guest?.last_name || ''}`.trim() || '—' },
     { key: 'amount', label: 'Amount', render: (p: Payment) => <span className="font-semibold">{formatCurrency(p.amount)}</span> },
     { key: 'method', label: 'Method', render: (p: Payment) => p.method.replace('_', ' ') },
-    { key: 'submitted_at', label: 'Submitted', render: (p: Payment) => p.submitted_at ? formatDateTime(p.submitted_at) : '—' },
+    { key: 'submitted_at', label: 'Submitted', render: (p: Payment) => p.created_at ? formatDateTime(p.created_at) : '—' },
     { key: 'status', label: 'Status', render: (p: Payment) => <PaymentStatusBadge status={p.status} /> },
     {
       key: 'actions', label: 'Actions',

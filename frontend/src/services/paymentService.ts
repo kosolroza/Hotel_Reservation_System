@@ -13,7 +13,7 @@ export const paymentService = {
   },
 
   getMyPayments: () =>
-    api.get<PaginatedResponse<Payment>>('/payments/my').then(r => r.data),
+    api.get<Payment[]>('/payments/my').then(r => r.data),
 
   getPayment: (id: number) =>
     api.get<Payment>(`/payments/${id}`).then(r => r.data),
