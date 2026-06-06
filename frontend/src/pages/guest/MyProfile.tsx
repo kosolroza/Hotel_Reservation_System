@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,7 +12,7 @@ import { toast } from '../../components/ui/toast';
 const profileSchema = z.object({
   first_name: z.string().min(1, 'Required'),
   last_name: z.string().min(1, 'Required'),
-  phone_number: z.string().optional(),
+  phone: z.string().optional(),
   address: z.string().optional(),
   nationality: z.string().optional(),
   gender: z.enum(['male', 'female', 'other']).optional(),
@@ -37,7 +38,7 @@ export default function MyProfile() {
     defaultValues: {
       first_name: user?.first_name || '',
       last_name: user?.last_name || '',
-      phone_number: user?.phone_number || '',
+      phone: user?.phone || '',
       address: user?.address || '',
       nationality: user?.nationality || '',
       gender: user?.gender,
@@ -46,6 +47,21 @@ export default function MyProfile() {
   });
 
   const pwForm = useForm<PwData>({ resolver: zodResolver(pwSchema) });
+
+  // ✅ useEffect INSIDE the component
+  useEffect(() => {
+    if (user) {
+      profileForm.reset({
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        phone: user.phone || '',
+        address: user.address || '',
+        nationality: user.nationality || '',
+        gender: user.gender,
+        passport_number: user.passport_number || '',
+      });
+    }
+  }, [user]);
 
   async function onProfileSave(data: ProfileData) {
     try {
@@ -59,7 +75,10 @@ export default function MyProfile() {
 
   async function onPasswordChange(data: PwData) {
     try {
-      await authService.changePassword({ current_password: data.current_password, new_password: data.new_password });
+      await authService.changePassword({
+        current_password: data.current_password,
+        new_password: data.new_password,
+      });
       toast.success('Password changed!');
       pwForm.reset();
     } catch {
@@ -79,7 +98,9 @@ export default function MyProfile() {
             <div>
               <Label>First Name</Label>
               <Input {...profileForm.register('first_name')} className="mt-1" />
-              {profileForm.formState.errors.first_name && <p className="text-red-500 text-xs mt-1">{profileForm.formState.errors.first_name.message}</p>}
+              {profileForm.formState.errors.first_name && (
+                <p className="text-red-500 text-xs mt-1">{profileForm.formState.errors.first_name.message}</p>
+              )}
             </div>
             <div>
               <Label>Last Name</Label>
@@ -91,19 +112,22 @@ export default function MyProfile() {
             </div>
             <div>
               <Label>Phone Number</Label>
-              <Input {...profileForm.register('phone_number')} className="mt-1" />
+              <Input {...profileForm.register('phone')} className="mt-1" placeholder="+855 12 345 678" />
             </div>
             <div className="sm:col-span-2">
               <Label>Address</Label>
-              <Input {...profileForm.register('address')} className="mt-1" />
+              <Input {...profileForm.register('address')} className="mt-1" placeholder="Your address" />
             </div>
             <div>
               <Label>Nationality</Label>
-              <Input {...profileForm.register('nationality')} className="mt-1" />
+              <Input {...profileForm.register('nationality')} className="mt-1" placeholder="e.g. Cambodian" />
             </div>
             <div>
               <Label>Gender</Label>
-              <select {...profileForm.register('gender')} className="mt-1 w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-navy">
+              <select
+                {...profileForm.register('gender')}
+                className="mt-1 w-full h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-navy"
+              >
                 <option value="">Select</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -112,7 +136,7 @@ export default function MyProfile() {
             </div>
             <div>
               <Label>Passport / ID Number</Label>
-              <Input {...profileForm.register('passport_number')} className="mt-1" />
+              <Input {...profileForm.register('passport_number')} className="mt-1" placeholder="AB1234567" />
             </div>
           </div>
           <Button type="submit" disabled={profileForm.formState.isSubmitting}>

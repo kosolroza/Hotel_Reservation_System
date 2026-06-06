@@ -4,12 +4,12 @@ export interface User {
   role: 'guest' | 'admin' | 'staff';
   first_name: string;
   last_name: string;
-  phone_number?: string;
+  phone?: string;              // ← phone not phone_number
   address?: string;
-  date_of_birth?: string;
   nationality?: string;
   gender?: 'male' | 'female' | 'other';
   passport_number?: string;
+  date_of_birth?: string;
   profile_picture?: string;
   created_at: string;
 }

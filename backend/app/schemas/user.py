@@ -8,7 +8,12 @@ class UserCreate(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
-    phone: Optional[str] = None
+    phone : Optional[str] = None
+    address: Optional[str] = None
+    nationality: Optional[str] = None
+    gender: Optional[str] = None
+    passport_number: Optional[str] = None
+    date_of_birth: Optional[str] = None
     password: str
 
     @field_validator("password")
@@ -22,7 +27,12 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    phone: Optional[str] = None
+    phone : Optional[str] = None
+    address: Optional[str] = None
+    nationality: Optional[str] = None
+    gender: Optional[str] = None
+    passport_number: Optional[str] = None
+    date_of_birth: Optional[str] = None
     avatar: Optional[str] = None
 
 
@@ -31,8 +41,13 @@ class UserResponse(BaseModel):
     first_name: str
     last_name: str
     email: str
-    phone: Optional[str] = None
-    role: UserRole
+    phone : Optional[str] = None
+    address: Optional[str] = None
+    nationality: Optional[str] = None
+    gender: Optional[str] = None
+    passport_number: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    role: str
     avatar: Optional[str] = None
     is_active: bool
     is_verified: bool
