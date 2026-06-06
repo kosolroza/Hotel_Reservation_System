@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
 from app.models.reservation import Reservation, ReservationStatus
 from app.models.room import Room
@@ -113,4 +114,19 @@ async def cancel_reservation(reservation_id: int, guest: User, db: AsyncSession)
         raise HTTPException(status_code=400, detail="Cannot cancel this reservation")
     reservation.status = ReservationStatus.cancelled
     await db.flush()
-    return reservation
+
+    # Re-select with explicit selectinload so Pydantic can read all attributes
+    # synchronously without triggering a lazy async fetch.
+    # (flush expires server-side onupdate columns like updated_at, and
+    #  db.refresh() alone would expire relationships — a fresh select avoids both.)
+    fresh = (await db.execute(
+        select(Reservation)
+        .where(Reservation.id == reservation_id)
+        .options(
+            selectinload(Reservation.room),
+            selectinload(Reservation.guest),
+            selectinload(Reservation.payment),
+            selectinload(Reservation.feedback),
+        )
+    )).scalar_one()
+    return fresh

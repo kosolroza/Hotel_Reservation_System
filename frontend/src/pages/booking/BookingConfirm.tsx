@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStore';
 import { bookingService } from '../../services/bookingService';
 import { BookingSummary } from '../../components/booking/BookingSummary';
 import { PriceBreakdown } from '../../components/booking/PriceBreakdown';
+import { PromoInput } from '../../components/booking/PromoInput';
 import { Navbar } from '../../components/layout/Navbar';
 import { Footer } from '../../components/layout/Footer';
 import { Input } from '../../components/ui/input';
@@ -183,15 +184,26 @@ export default function BookingConfirm() {
               discountPercent={store.discountPercent}
               total={total}
             />
-            <div className="bg-white rounded-xl shadow-md p-5">
-              <h3 className="font-semibold text-navy mb-3">Price Breakdown</h3>
-              <PriceBreakdown
-                pricePerNight={store.room.price_per_night}
-                checkIn={store.checkIn}
-                checkOut={store.checkOut}
-                discountPercent={store.discountPercent}
-                promoCode={store.promoCode}
-              />
+            <div className="bg-white rounded-xl shadow-md p-5 space-y-4">
+              <div>
+                <h3 className="font-semibold text-navy mb-2">Promo Code</h3>
+                <PromoInput
+                  roomId={store.room.id}
+                  applied={store.promoCode ? { code: store.promoCode, percent: store.discountPercent } : undefined}
+                  onApply={(code, percent) => store.setPromo(code, percent)}
+                  onClear={() => store.clearPromo()}
+                />
+              </div>
+              <div>
+                <h3 className="font-semibold text-navy mb-3">Price Breakdown</h3>
+                <PriceBreakdown
+                  pricePerNight={store.room.price_per_night}
+                  checkIn={store.checkIn}
+                  checkOut={store.checkOut}
+                  discountPercent={store.discountPercent}
+                  promoCode={store.promoCode}
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from app.database import get_db
 from app.models.payment import Payment, PaymentStatus
 from app.models.reservation import Reservation, ReservationStatus
-from app.services.telegram_service import send_message
+from app.services.telegram_service import send_message, answer_callback, edit_reply_markup
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -32,8 +32,15 @@ async def telegram_webhook(request: Request, db: AsyncSession = Depends(get_db))
     if not callback:
         return {"ok": True}
 
-    chat_id = str(callback["from"]["id"])
-    data    = callback.get("data", "")
+    callback_id = callback.get("id", "")
+    chat_id     = str(callback["from"]["id"])
+    data        = callback.get("data", "")
+    message     = callback.get("message", {})
+    message_id  = message.get("message_id")
+
+    # ── 2. Always acknowledge the button tap first ───────────────────
+    # This clears the loading spinner on Telegram's side immediately.
+    await _answer(callback_id)
 
     # Security: ignore requests from anyone except the configured admin
     if chat_id != str(settings.TELEGRAM_ADMIN_CHAT_ID):
@@ -42,14 +49,14 @@ async def telegram_webhook(request: Request, db: AsyncSession = Depends(get_db))
     if ":" not in data:
         return {"ok": True}
 
-    # ── 2. Parse action and payment ID ──────────────────────────────
+    # ── 3. Parse action and payment ID ──────────────────────────────
     try:
         action, payment_id_str = data.split(":", 1)
         payment_id = int(payment_id_str)
     except (ValueError, IndexError):
         return {"ok": True}
 
-    # ── 3. Load payment from DB ──────────────────────────────────────
+    # ── 4. Load payment from DB ──────────────────────────────────────
     payment = (
         await db.execute(select(Payment).where(Payment.id == payment_id))
     ).scalar_one_or_none()
@@ -58,7 +65,7 @@ async def telegram_webhook(request: Request, db: AsyncSession = Depends(get_db))
         await _reply(chat_id, "❌ Payment not found.")
         return {"ok": True}
 
-    # ── 4. Load reservation ──────────────────────────────────────────
+    # ── 5. Load reservation ──────────────────────────────────────────
     reservation = (
         await db.execute(
             select(Reservation).where(Reservation.id == payment.reservation_id)
@@ -67,7 +74,7 @@ async def telegram_webhook(request: Request, db: AsyncSession = Depends(get_db))
 
     ref = reservation.reference if reservation else f"#{payment.reservation_id}"
 
-    # ── 5. Apply action and FLUSH before any network call ────────────
+    # ── 6. Apply action and FLUSH before any network call ────────────
     if action == "approve":
         if payment.status == PaymentStatus.completed:
             await _reply(chat_id, f"ℹ️ Payment <code>{ref}</code> was already approved.")
@@ -79,7 +86,10 @@ async def telegram_webhook(request: Request, db: AsyncSession = Depends(get_db))
             reservation.status = ReservationStatus.confirmed
         await db.flush()   # write to DB — get_db will commit on success
 
-        # Telegram reply is best-effort; failure must NOT roll back the DB
+        # Remove the Approve/Reject buttons so they can't be tapped again
+        if message_id:
+            await _remove_buttons(chat_id, message_id)
+
         await _reply(
             chat_id,
             f"✅ Payment approved for booking <code>{ref}</code>.\nBooking is now confirmed."
@@ -93,6 +103,10 @@ async def telegram_webhook(request: Request, db: AsyncSession = Depends(get_db))
         payment.status = PaymentStatus.failed
         await db.flush()
 
+        # Remove the Approve/Reject buttons so they can't be tapped again
+        if message_id:
+            await _remove_buttons(chat_id, message_id)
+
         await _reply(
             chat_id,
             f"❌ Payment rejected for booking <code>{ref}</code>.\nGuest will need to re-upload."
@@ -101,9 +115,27 @@ async def telegram_webhook(request: Request, db: AsyncSession = Depends(get_db))
     return {"ok": True}
 
 
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+async def _answer(callback_id: str, text: str = "") -> None:
+    """Acknowledge the button tap — clears Telegram's loading spinner."""
+    try:
+        await answer_callback(callback_id, text)
+    except Exception as exc:
+        logger.warning("answerCallbackQuery failed: %s", exc)
+
+
 async def _reply(chat_id: str, text: str) -> None:
-    """Send a Telegram message, swallowing any errors so the DB is never rolled back."""
+    """Send a Telegram message, swallowing errors so the DB is never rolled back."""
     try:
         await send_message(chat_id, text)
     except Exception as exc:
         logger.warning("Telegram reply failed: %s", exc)
+
+
+async def _remove_buttons(chat_id: str, message_id: int) -> None:
+    """Edit the original message to remove the inline keyboard."""
+    try:
+        await edit_reply_markup(chat_id, message_id)
+    except Exception as exc:
+        logger.warning("editMessageReplyMarkup failed: %s", exc)

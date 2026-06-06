@@ -5,12 +5,17 @@ export interface User {
   first_name: string;
   last_name: string;
   phone?: string;              // ← phone not phone_number
+  phone_number?: string;
+  profile_picture?: string;
+  // Extended fields (may not be returned by all endpoints)
   address?: string;
   nationality?: string;
   gender?: 'male' | 'female' | 'other';
   passport_number?: string;
   date_of_birth?: string;
   profile_picture?: string;
+  is_active?: boolean;
+  is_verified?: boolean;
   created_at: string;
 }
 
@@ -84,12 +89,23 @@ export interface Payment {
   status: 'pending' | 'completed' | 'failed' | 'refunded';
   paid_at?: string;
   created_at: string;
-  // Enriched fields from GET /payments/my
+  // Enriched fields from GET /payments/my (guest)
   booking_reference?: string;
   check_in_date?: string;
   check_out_date?: string;
   room_number?: string;
   room_type_name?: string;
+  // Enriched fields from GET /admin/payments (admin table)
+  booking?: {
+    id?: number;
+    booking_reference?: string;
+    guest?: {
+      id?: number;
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+    };
+  };
 }
 
 export interface Promotion {

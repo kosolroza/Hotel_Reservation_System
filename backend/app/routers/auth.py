@@ -23,16 +23,23 @@ async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
-    return current_user
+    return UserResponse.model_validate(current_user)
 
 
 @router.put("/me", response_model=UserResponse)
 async def update_me(data: UserUpdate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    for field, value in data.model_dump(exclude_none=True).items():
-        setattr(current_user, field, value)
+    if data.first_name is not None:
+        current_user.first_name = data.first_name
+    if data.last_name is not None:
+        current_user.last_name = data.last_name
+    phone = data.get_phone()
+    if phone is not None:
+        current_user.phone = phone
+    avatar = data.get_avatar()
+    if avatar is not None:
+        current_user.avatar = avatar
     await db.flush()
-    await db.refresh(current_user)
-    return current_user
+    return UserResponse.model_validate(current_user)
 
 
 @router.post("/change-password", response_model=MessageResponse)

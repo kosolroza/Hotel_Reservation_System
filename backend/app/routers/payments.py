@@ -1,5 +1,6 @@
 import json
 import logging
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile, File
 from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +19,29 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/payments", tags=["Payments"])
+
+
+
+async def _notify_telegram(
+    payment_id: int,
+    reservation_ref: str,
+    guest_name: str,
+    amount: float,
+    slip_url: str,
+    slip_local_path: str,
+) -> None:
+    """Fire-and-forget Telegram notification — runs after the HTTP response is returned."""
+    try:
+        await send_receipt_to_admin(
+            payment_id=payment_id,
+            reservation_ref=reservation_ref,
+            guest_name=guest_name,
+            amount=amount,
+            slip_url=slip_url,
+            slip_local_path=slip_local_path,
+        )
+    except Exception as exc:
+        logger.warning("Telegram notification failed: %s", exc)
 
 
 @router.post("", response_model=PaymentResponse, status_code=201)
@@ -45,9 +69,10 @@ async def create_payment(
     )
     payment = await process_payment(data, db)
 
-    # ── Send receipt photo to admin on Telegram ──────────────────────
-    # Wrapped in try/except so a Telegram failure never blocks the payment.
-    # We reload reservation + guest explicitly to avoid async lazy-load errors.
+    # ── Schedule Telegram notification as a background task ──────────
+    # We collect all data from the DB BEFORE returning, then schedule the
+    # Telegram call with asyncio.create_task so it runs AFTER the response
+    # is sent. This prevents Telegram API latency from causing 502 timeouts.
     if slip_path:
         try:
             reservation = (await db.execute(
@@ -58,19 +83,18 @@ async def create_payment(
 
             if reservation and reservation.guest:
                 guest_name = f"{reservation.guest.first_name} {reservation.guest.last_name}"
-                # Remove duplicate slash: BACKEND_URL has no trailing slash,
-                # slip_path starts with '/'
                 slip_url = f"{settings.BACKEND_URL.rstrip('/')}{slip_path}"
-
-                await send_receipt_to_admin(
+                # schedule — does NOT block the response
+                asyncio.create_task(_notify_telegram(
                     payment_id=payment.id,
                     reservation_ref=reservation.reference,
                     guest_name=guest_name,
                     amount=float(payment.amount),
                     slip_url=slip_url,
-                )
+                    slip_local_path=slip_path,
+                ))
         except Exception as exc:
-            logger.warning("Telegram notification failed: %s", exc)
+            logger.warning("Could not schedule Telegram notification: %s", exc)
     # ─────────────────────────────────────────────────────────────────
 
     return PaymentResponse.model_validate(payment)

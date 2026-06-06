@@ -13,10 +13,10 @@ router = APIRouter(prefix="/admin/staff", tags=["Admin - Staff"])
 
 
 @router.get("", response_model=PaginatedResponse)
-async def list_staff(page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db), _: User = Depends(get_current_admin)):
+async def list_staff(page: int = Query(1, ge=1), per_page: int = Query(20, ge=1, le=100), db: AsyncSession = Depends(get_db), _: User = Depends(get_current_admin)):
     total = (await db.execute(select(func.count(Staff.id)))).scalar() or 0
-    rows = (await db.execute(select(Staff).order_by(Staff.created_at.desc()).offset(get_offset(page, page_size)).limit(page_size))).scalars().all()
-    return paginate([StaffResponse.model_validate(s).model_dump() for s in rows], total, page, page_size)
+    rows = (await db.execute(select(Staff).order_by(Staff.created_at.desc()).offset(get_offset(page, per_page)).limit(per_page))).scalars().all()
+    return paginate([StaffResponse.model_validate(s).model_dump() for s in rows], total, page, per_page)
 
 
 @router.post("", response_model=StaffResponse, status_code=201)
