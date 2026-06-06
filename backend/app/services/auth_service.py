@@ -21,7 +21,6 @@ async def register_user(data: UserCreate, db: AsyncSession) -> Token:
         gender=data.gender,
         passport_number=data.passport_number,
         date_of_birth=data.date_of_birth,
-        phone=data.get_phone(),
         hashed_password=hash_password(data.password),
         role=UserRole.guest,
     )
