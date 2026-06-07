@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, Search, Users, UserCheck, UserX, Briefcase } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { adminService } from '../../services/adminService';
@@ -83,9 +83,11 @@ export default function AdminStaff() {
   });
 
 
-const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({ resolver: zodResolver(schema),
-    defaultValues: { is_active: true },
-  });
+const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData, any, FormData>({ 
+  resolver: zodResolver(schema) as Resolver<FormData>,
+  defaultValues: { is_active: true },
+});
+
   const watchedDept = watch('department');
 
   function openCreate() {

@@ -21,11 +21,11 @@ export default function MyFeedback() {
 
   const { data: bookingsData } = useQuery({
     queryKey: ['my-bookings'],
-    queryFn: () => bookingService.getMyBookings('checked_out'),
+    queryFn: () => bookingService.getMyBookings(),
   });
 
   const feedbackIds = new Set((feedbacks || []).map(f => f.booking_id));
-  const eligibleBookings = (bookingsData?.data || []).filter(b => !feedbackIds.has(b.id));
+  const eligibleBookings = (bookingsData || []).filter((b: Booking) => !feedbackIds.has(b.id));
 
   return (
     <div className="space-y-8">
