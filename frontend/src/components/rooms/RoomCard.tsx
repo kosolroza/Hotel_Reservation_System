@@ -50,7 +50,7 @@ export function RoomCard({ room }: Props) {
 
         <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
           <span className="flex items-center gap-1"><BedDouble className="h-3 w-3" /> {room.room_type?.name ?? 'Standard'}</span>
-          <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Up to {room.room_type?.capacity ?? 2}</span>
+          <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Up to {room.room_type?.max_capacity ?? 2}</span>
         </div>
 
         {room.amenities?.length > 0 && (

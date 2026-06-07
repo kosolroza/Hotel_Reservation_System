@@ -45,7 +45,7 @@ export default function AdminGuests() {
   const columns = [
     { key: 'name', label: 'Name', render: (g: User) => `${g.first_name} ${g.last_name}` },
     { key: 'email', label: 'Email' },
-    { key: 'phone_number', label: 'Phone', render: (g: User) => g.phone_number || '—' },
+    { key: 'phone_number', label: 'Phone', render: (g: User) => g.phone || '—' },
     { key: 'nationality', label: 'Nationality', render: (g: User) => g.nationality || '—' },
     { key: 'created_at', label: 'Member Since', render: (g: User) => formatDate(g.created_at) },
   ];
@@ -84,7 +84,7 @@ export default function AdminGuests() {
             <div className="space-y-3 text-sm">
               {[
                 ['Email', selected.email],
-                ['Phone', selected.phone_number || '—'],
+                ['Phone', selected.phone || '—'],
                 ['Address', selected.address || '—'],
                 ['Nationality', selected.nationality || '—'],
                 ['Gender', selected.gender || '—'],
@@ -105,7 +105,7 @@ export default function AdminGuests() {
           {selected && editMode && (
             <form onSubmit={handleSubmit(onSave)} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                {(['first_name', 'last_name', 'phone_number', 'address', 'nationality', 'passport_number'] as const).map(f => (
+                {(['first_name', 'last_name', 'phone', 'address', 'nationality', 'passport_number'] as const).map(f => (
                   <div key={f}>
                     <Label>{f.replace(/_/g, ' ')}</Label>
                     <Input {...register(f)} className="mt-1" />
