@@ -6,6 +6,7 @@ from app.schemas.user import UserCreate, UserLogin, Token, UserResponse
 from app.utils.security import hash_password, verify_password, create_access_token
 
 
+
 async def register_user(data: UserCreate, db: AsyncSession) -> Token:
     existing = (await db.execute(select(User).where(User.email == data.email))).scalar_one_or_none()
     if existing:
@@ -14,7 +15,12 @@ async def register_user(data: UserCreate, db: AsyncSession) -> Token:
         first_name=data.first_name,
         last_name=data.last_name,
         email=data.email,
-        phone=data.get_phone(),
+        phone=data.phone,
+        address=data.address,
+        nationality=data.nationality,
+        gender=data.gender,
+        passport_number=data.passport_number,
+        date_of_birth=data.date_of_birth,
         hashed_password=hash_password(data.password),
         role=UserRole.guest,
     )

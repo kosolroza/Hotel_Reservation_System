@@ -28,17 +28,15 @@ async def get_me(current_user: User = Depends(get_current_user)):
 
 @router.put("/me", response_model=UserResponse)
 async def update_me(data: UserUpdate, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-    if data.first_name is not None:
-        current_user.first_name = data.first_name
-    if data.last_name is not None:
-        current_user.last_name = data.last_name
-    phone = data.get_phone()
-    if phone is not None:
-        current_user.phone = phone
-    avatar = data.get_avatar()
-    if avatar is not None:
-        current_user.avatar = avatar
+    valid_fields = {
+        'first_name', 'last_name', 'phone', 'address',
+        'nationality', 'gender', 'passport_number', 'date_of_birth', 'avatar'
+    }
+    for field, value in data.model_dump(exclude_none=True).items():
+        if field in valid_fields:
+            setattr(current_user, field, value)
     await db.flush()
+    await db.refresh(current_user)
     return UserResponse.model_validate(current_user)
 
 

@@ -4,16 +4,12 @@ export interface User {
   role: 'guest' | 'admin' | 'staff';
   first_name: string;
   last_name: string;
-  phone_number?: string;
-  profile_picture?: string;
-  // Extended fields (may not be returned by all endpoints)
+  phone?: string;
   address?: string;
-  date_of_birth?: string;
   nationality?: string;
   gender?: 'male' | 'female' | 'other';
   passport_number?: string;
-  is_active?: boolean;
-  is_verified?: boolean;
+  date_of_birth?: string;
   created_at: string;
 }
 
