@@ -30,7 +30,7 @@ const schema = z.object({
   first_name: z.string().min(1, 'First name required'),
   last_name: z.string().min(1, 'Last name required'),
   email: z.string().email('Invalid email'),
-  phone_number: z.string().optional(),
+  phone : z.string().optional(),
   address: z.string().optional(),
   date_of_birth: z.string().optional(),
   nationality: z.string().optional(),
@@ -214,7 +214,7 @@ export default function Register() {
                     <Label>Phone Number</Label>
                     <div className="relative mt-1">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input type="tel" {...register('phone_number')} className="pl-9" placeholder="+855 12 345 678" />
+                      <Input type="tel" {...register('phone')} className="pl-9" placeholder="+855 12 345 678" />
                     </div>
                   </div>
                 </div>
